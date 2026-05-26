@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # ── Isolated Database Service ──────────────────────────────────────────
+  cts-db:
+    image: postgres:16-alpine
+    container_name: cts-dashboard-db
+    ports:
+      - "5434:5432" # Exposes on 5434 to completely prevent host port conflicts with existing databases
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SecurePassword2024
+      POSTGRES_DB: ptalk_business
+    volumes:
+      - cts_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ptalk_business"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Dashboard Backend App Service ──────────────────────────────────────
+  cts-app:
+    build: .
+    container_name: cts-dashboard-backend
+    ports:
+      - "3000:3000" # Exposes Node.js API on port 3000
+    environment:
+      # Connects directly to the companion db container internally on port 5432
+      DATABASE_URL: postgres://postgres:SecurePassword2024@cts-db:5432/ptalk_business
+      AUTHENTIK_JWKS_URI: http://localhost:9000/application/o/ptalk/.well-known/jwks.json
+      AUTHENTIK_ISSUER: http://localhost:9000/application/o/ptalk/
+    depends_on:
+      cts-db:
+        condition: service_healthy # Wait for database to be fully ready before starting migrations
+    restart: on-failure
+
+volumes:
+  cts_db_data:
