@@ -1,0 +1,13 @@
+{
+  "version": "6",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1779808323523,
+      "tag": "0000_early_vance_astro",
+      "breakpoints": true
+    }
+  ]
+}
